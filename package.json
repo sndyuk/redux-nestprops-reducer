@@ -1,6 +1,6 @@
 {
   "name": "redux-nestprops-reducer",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A reducer handling a nested property. It reduces complexity in your code.",
   "author": "sndyuk",
   "license": "ISC",
