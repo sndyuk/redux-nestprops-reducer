@@ -1,6 +1,6 @@
 {
   "name": "redux-nestprops-reducer",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "A reducer handling a nested property. It reduces complexity in your code.",
   "author": "sndyuk",
   "license": "ISC",
@@ -9,8 +9,8 @@
     "test": "mocha"
   },
   "repository": {
-      "type": "git",
-      "url": "https://github.com/sndyuk/redux-nestprops-reducer.git"
+    "type": "git",
+    "url": "https://github.com/sndyuk/redux-nestprops-reducer.git"
   },
   "keywords": [
     "Redux",

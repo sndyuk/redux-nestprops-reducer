@@ -1,5 +1,5 @@
 const assert = require('assert');
-const reduxNestedReducer = require('../index');
+const nestpropsReducer = require('../index');
 const List = require('immutable').List;
 const Map = require('immutable').Map;
 
@@ -25,7 +25,7 @@ const simpleReducer = (state, action) => {
 };
 
 
-const reducer = reduxNestedReducer(simpleReducer, [
+const reducer = nestpropsReducer(simpleReducer, [
   ACTION_A,
   ACTION_B,
   ACTION_C,
@@ -156,6 +156,7 @@ it('immutable map', function() {
   }));
 });
 
+
 it('nothing changed', function() {
   const state = {
     array: [0, 1, 2],
@@ -176,4 +177,44 @@ it('ignored action', function() {
   const listReducer = reducer('array', 1);
   const action = { type: ACTION_IGNORE };
   assert.equal(listReducer(state, action), state);
+});
+
+it('apply all to first prop', function() {
+  const state = [{ key: 1 }, { key: 2 }, { key: 3 }];
+
+  const listReducer = reducer(null, 'key');
+  const action = { type: ACTION_A };
+  assert.deepEqual(listReducer(state, action),
+    [{ key: 0 }, { key: 0 }, { key: 0 }]
+  );
+});
+
+it('apply all to last prop', function() {
+  const state = {
+    array: [1, 2, 3],
+    decoy: 1,
+  };
+
+  const listReducer = reducer('array', null);
+  const action = { type: ACTION_A };
+  assert.deepEqual(listReducer(state, action),
+  {
+    array: [0, 0, 0],
+    decoy: 1,
+  });
+});
+
+it('apply all to intermediate prop', function() {
+  const state = {
+    array: [{ key: 1 }, { key: 2 }, { key: 3 }],
+    decoy: 1,
+  };
+
+  const listReducer = reducer('array', null, 'key');
+  const action = { type: ACTION_A };
+  assert.deepEqual(listReducer(state, action),
+  {
+    array: [{ key: 0 }, { key: 0 }, { key: 0 }],
+    decoy: 1,
+  });
 });
