@@ -1,4 +1,4 @@
-# redux-nestprops-reducer v1.0.2
+# redux-nestprops-reducer v1.0.4
 
 It makes a complex reducer simpler.
 
@@ -20,12 +20,16 @@ import nestpropsReducer from 'redux-nestprops-reducer';
 ・whitelist actions are actions of the reducer.
 ・identifiers can be string, number, or function. The function must return an identifier of the parent object.
 */
-const reducer = nestpropsReducer(reducer, [whitelist actions])(identifiers);
+const reducer = nestpropsReducer(reducer, [whitelist actions], initialState)(identifiers);
 ```
 
 
 ### Case: use a reducer for multiple objects.
 ```js
+var reduxNestpropsReducer = require("redux-nestprops-reducer")
+var createStore = require("redux").createStore
+var combineReducers = require("redux").combineReducers
+
 //--- Sample state
 const complexState = {
   allArticles: [
@@ -33,16 +37,16 @@ const complexState = {
     { id: 2, value: 2, popular: false },
     { id: 3, value: 3 },
   ],
-  popularArticlues: [
+  popularArticles: [
     { id: 2, value: 2, popular: false },
   ],
 };
 
 //--- Sample reducer
 const SET_POPULAR = 'SET_POPULAR';
-const articlueReducer = (state, action) => {
+const articlueReducer = (state = {}, action) => {
   switch(action.type) {
-    SET_POPULAR:
+    case SET_POPULAR:
       return {
         ...state,
         popular: action.popular,
@@ -52,21 +56,24 @@ const articlueReducer = (state, action) => {
   }
 };
 
-const articlesReducer = nestpropsReducer(articlueReducer, [SET_POPULAR])
-  ((state, action) => state.findIndex(f => f.id === action.id));
+const articlesReducer = nestpropsReducer(articlueReducer, [SET_POPULAR], [])
+  ((state, action) => {
+    const a = state.findIndex(f => f.id === action.id);
+    console.log(action.id, a);
+    return a;
+  });
 
-/* store would be like this:
-const store = createStore(
-  combineReducers({
+const store = createStore(combineReducers({
     allArticles: articlueReducer,
     popularArticles: articlueReducer,
-  });
-});
-*/
+}), complexState);
 
-// In this case if the action is dispatched.
-dispatch({ type: SET_POPULAR, id: 2, popular: true });
-// the state is going to be:
+
+const action = { type: SET_POPULAR, id: 2, popular: true };
+store.dispatch(action);
+
+console.log(store.getState());
+/*
 {
   allArticles: [
     { id: 1, value: 1 },
@@ -77,6 +84,7 @@ dispatch({ type: SET_POPULAR, id: 2, popular: true });
     { id: 2, value: 2, popular: true },
   ],
 };
+*/
 ```
 
 ### Case: Nested list.
@@ -132,7 +140,6 @@ const articleReducer = nestpropsReducer(articlueReducer, [SET_POPULAR]);
 const store = createStore(
   combineReducers({
     articles: articlueReducer(
-      null, // null indicates that the list('categories list') may need to be applied an action.
       (state, action) => state.findIndex(f => f.id === action.id)
     ),
   });

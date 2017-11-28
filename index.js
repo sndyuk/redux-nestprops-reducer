@@ -54,9 +54,9 @@ const dig = (state, action, kfn, rest) => (applyer) => {
   }
 };
 
-const nestedReducer = (reducer, acceptActions) => (...args) => {
+const nestedReducer = (reducer, acceptActions, initialState) => (...args) => {
   const keys = hasValue(args[0] && args[0].reduce) ? args[0] : [...args];
-  return (state, action) => {
+  return (state = initialState, action) => {
     if (!acceptActions.includes(action.type)) return state;
     return dig(state, action, keys[0], keys.slice(1))((k, state) => apply(reducer, state, action, k));
   };
