@@ -2,6 +2,54 @@
 
 It makes a complex reducer simpler.
 
+If you want to change the `disabled` flag of a one of the comments of the state below to `true`,
+```js
+{
+  articles: Map([
+    ['Sea', { title: '...', comments: List([{ id: 1, disabled: false  }, { id: 2, disabled: false }]) }],
+    ['Sports', { title: '...', comments: List([{ id: 1, disabled: false }, { id: 2, disabled: false }]) }]
+  ])
+}
+```
+
+define the reducer
+```js
+const DISABLE = 'DISABLE';
+const commentReducer = (state = {}, action) => {
+  switch(action.type) {
+    case DISABLE:
+      return {
+        ...state,
+        disabled: true,
+      };
+    default:
+      return state;
+  }
+};
+
+...
+
+combineReducers({
+  articles: nestpropsReducer(commentReducer, [ENABLE, DISABLE])(
+    (state, action) => state.findKey((v, k) => k === action.category),
+    'comments',
+    (state, action) => state.findIndex(s => s.id === action.id),
+  ),
+}),
+
+...
+// then dispatch the action
+store.dispatch({ type: DISABLE, category: 'Sea', id: 2 });
+/*
+{
+  articles: Map([
+    ['Sea', { title: '...', comments: List([{ id: 1, disabled: false  }, { id: 2, disabled: true }]) }],
+    ['Sports', { title: '...', comments: List([{ id: 1, disabled: false }, { id: 2, disabled: false }]) }]
+  ])
+}
+*/
+```
+
 ## Installation
 
 Using npm:
@@ -178,7 +226,6 @@ const complexState = {
   ]),
 };
 
-debugger
 const COMMENT_DISABLED = 'COMMENT_DISABLED';
 const commentReducer = (state = {}, action) => {
   switch(action.type) {
