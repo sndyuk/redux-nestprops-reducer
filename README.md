@@ -26,9 +26,9 @@ const reducer = nestpropsReducer(reducer, [whitelist actions], initialState)(ide
 
 ### Case: use a reducer for multiple objects.
 ```js
-var reduxNestpropsReducer = require("redux-nestprops-reducer")
-var createStore = require("redux").createStore
-var combineReducers = require("redux").combineReducers
+const nestpropsReducer = require('redux-nestprops-reducer');
+const createStore = require('redux').createStore;
+const combineReducers = require('redux').combineReducers;
 
 //--- Sample state
 const complexState = {
@@ -44,7 +44,7 @@ const complexState = {
 
 //--- Sample reducer
 const SET_POPULAR = 'SET_POPULAR';
-const articlueReducer = (state = {}, action) => {
+const articleReducer = (state = {}, action) => {
   switch(action.type) {
     case SET_POPULAR:
       return {
@@ -56,16 +56,12 @@ const articlueReducer = (state = {}, action) => {
   }
 };
 
-const articlesReducer = nestpropsReducer(articlueReducer, [SET_POPULAR], [])
-  ((state, action) => {
-    const a = state.findIndex(f => f.id === action.id);
-    console.log(action.id, a);
-    return a;
-  });
+const articlesReducer = nestpropsReducer(articleReducer, [SET_POPULAR])
+  ((state, action) => state.findIndex(f => f.id === action.id));
 
 const store = createStore(combineReducers({
-    allArticles: articlueReducer,
-    popularArticles: articlueReducer,
+    allArticles: articleReducer,
+    popularArticles: articleReducer,
 }), complexState);
 
 
@@ -102,46 +98,120 @@ const complexState = {
   ]
 };
 
-const articleReducer = nestpropsReducer(articlueReducer, [SET_POPULAR]);
+//--- Sample reducer
+const SET_POPULAR = 'SET_POPULAR';
+const articleReducer = (state = {}, action) => {
+  switch(action.type) {
+    case SET_POPULAR:
+      return {
+        ...state,
+        popular: action.popular,
+      };
+    default:
+      return state;
+  }
+};
+const articlesReducer = nestpropsReducer(articleReducer, [SET_POPULAR]);
 
 const store = createStore(
   combineReducers({
-    categories: articlueReducer(
+    categories: articlesReducer(
       (state, action) => state.findIndex(s => s.category === action.category),
+      'popularArticlues',
       (state, action) => state.findIndex(s => s.id === action.id)
     ),
-  });
-});
-
-
+  }),
+complexState);
+const action = { type: SET_POPULAR, category: 'Sports', id: 2, popular: true };
+store.dispatch(action);
+console.log(store.getState());
+/*
+{
+  categories: [
+    {
+      category: 'Sea',
+      popularArticlues: [{ id: 2, value: 2, popular: false }],
+    },
+    {
+      category: 'Sports',
+      popularArticlues: [{ id: 2, value: 2, popular: true }],
+    },
+  ]
+}
+*/
 
 // Identifier can be null:
 const store = createStore(
   combineReducers({
-    categories: articlueReducer(
+    categories: articlesReducer(
       null, // null indicates that the list('categories list') may need to be applied an action.
+      'popularArticlues',
       (state, action) => state.findIndex(f => f.id === action.id)
     ),
   });
 });
+const action = { type: SET_POPULAR, category: 'Sports', id: 2, popular: true };
+store.dispatch(action);
+console.log(store.getState());
+/*
+{
+  categories: [
+    {
+      category: 'Sea',
+      popularArticlues: [{ id: 2, value: 2, popular: true }],
+    },
+    {
+      category: 'Sports',
+      popularArticlues: [{ id: 2, value: 2, popular: true }],
+    },
+  ]
+}
+*/
 ```
 
 ### Case: Immutable map and list
 ```js
 const complexState = {
   articles: Map([
-    [1, { title: '...', comments: List(['...', '...']) }],
-    [2, { title: '...', comments: List(['...', '...']) }],
-    [3, { title: '...', comments: List(['...', '...']) }],
+    ['Sea', { title: '...', comments: List([{ id: 1, disabled: false  }, { id: 2, disabled: false }]) }],
+    ['Sports', { title: '...', comments: List([{ id: 1, disabled: false }, { id: 2, disabled: false }]) }],
   ]),
 };
 
-const articleReducer = nestpropsReducer(articlueReducer, [SET_POPULAR]);
+debugger
+const COMMENT_DISABLED = 'COMMENT_DISABLED';
+const commentReducer = (state = {}, action) => {
+  switch(action.type) {
+    case COMMENT_DISABLED:
+      return {
+        ...state,
+        disabled: true,
+      };
+    default:
+      return state;
+  }
+};
+
+const articlesReducer = nestpropsReducer(commentReducer, [COMMENT_DISABLED]);
 const store = createStore(
   combineReducers({
-    articles: articlueReducer(
-      (state, action) => state.findIndex(f => f.id === action.id)
+    articles: articlesReducer(
+      'Sea',
+      'comments',
+      (state, action) => state.findIndex(s => s.id === action.id),
     ),
-  });
-});
+  }),
+  complexState,
+);
+const action = { type: COMMENT_DISABLED, id: 2 };
+store.dispatch(action);
+console.log(store.getState());
+/*
+{
+  articles: Map([
+    ['Sea', { title: '...', comments: List([{ id: 1, disabled: false  }, { id: 2, disabled: true }]) }],
+    ['Sports', { title: '...', comments: List([{ id: 1, disabled: false }, { id: 2, disabled: false }]) }],
+  ]),
+}
+*/
 ```

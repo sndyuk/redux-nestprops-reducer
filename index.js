@@ -14,6 +14,9 @@ const apply = (reducer, state, action, key) => {
     }
     return reducer(state, action);
   }
+  if (key === -1) {
+    return state;
+  }
   if (!hasValue(state)) return state;
   if (state.constructor === Array) {
     const newValue = reducer(state[key], action);
@@ -54,7 +57,7 @@ const dig = (state, action, kfn, rest) => (applyer) => {
   }
 };
 
-const nestedReducer = (reducer, acceptActions, initialState) => (...args) => {
+const nestedReducer = (reducer, acceptActions, initialState = null) => (...args) => {
   const keys = hasValue(args[0] && args[0].reduce) ? args[0] : [...args];
   return (state = initialState, action) => {
     if (!acceptActions.includes(action.type)) return state;
