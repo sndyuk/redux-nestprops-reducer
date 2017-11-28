@@ -14,10 +14,7 @@ const apply = (reducer, state, action, key) => {
     }
     return reducer(state, action);
   }
-  if (key === -1) {
-    return state;
-  }
-  if (!hasValue(state)) return state;
+  if (key === -1 || !hasValue(state)) return state;
   if (state.constructor === Array) {
     const newValue = reducer(state[key], action);
     if (state[key] === newValue) return state;

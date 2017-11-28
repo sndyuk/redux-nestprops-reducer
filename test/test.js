@@ -2,6 +2,8 @@ const assert = require('assert');
 const nestpropsReducer = require('../index');
 const List = require('immutable').List;
 const Map = require('immutable').Map;
+const createStore = require('redux').createStore;
+const combineReducers = require('redux').combineReducers;
 
 const ACTION_A = 'A';
 const ACTION_B = 'B';
@@ -217,4 +219,85 @@ it('apply all to intermediate prop', function() {
     array: [{ key: 0 }, { key: 0 }, { key: 0 }],
     decoy: 1,
   });
+});
+
+
+it('apply though dispatching store', function() {
+  const complexState = {
+    articles: Map([
+      ['Sea', { title: '...', comments: List([{ id: 1, disabled: false  }, { id: 2, disabled: false }]) }],
+      ['Sports', { title: '...', comments: List([{ id: 1, disabled: false }, { id: 2, disabled: false }]) }],
+    ]),
+  };
+  const COMMENT_DISABLED = 'COMMENT_DISABLED';
+  const commentReducer = (state = {}, action) => {
+    switch(action.type) {
+      case COMMENT_DISABLED:
+        return {
+          ...state,
+          disabled: true,
+        };
+      default:
+        return state;
+    }
+  };
+  const articlesReducer = nestpropsReducer(commentReducer, [COMMENT_DISABLED]);
+  const store = createStore(
+    combineReducers({
+      articles: articlesReducer(
+        'Sea',
+        'comments',
+        (state, action) => state.findIndex(s => s.id === action.id),
+      ),
+    }),
+    complexState,
+  );
+  const action = { type: COMMENT_DISABLED, id: 2 };
+  store.dispatch(action);
+  assert.deepEqual(JSON.stringify(store.getState()),
+  JSON.stringify({
+    articles: Map([
+      ['Sea', { title: '...', comments: List([{ id: 1, disabled: false  }, { id: 2, disabled: true }]) }],
+      ['Sports', { title: '...', comments: List([{ id: 1, disabled: false }, { id: 2, disabled: false }]) }],
+    ]),
+  }));
+});
+
+it('index not found', function() {
+  const complexState = {
+    articles: Map([
+      ['Sports', { title: '...', comments: List([{ id: 1, disabled: false }, { id: 2, disabled: false }]) }],
+    ]),
+  };
+  const COMMENT_DISABLED = 'COMMENT_DISABLED';
+  const commentReducer = (state = {}, action) => {
+    switch(action.type) {
+      case COMMENT_DISABLED:
+        return {
+          ...state,
+          disabled: true,
+        };
+      default:
+        return state;
+    }
+  };
+  const articlesReducer = nestpropsReducer(commentReducer, [COMMENT_DISABLED]);
+  const store = createStore(
+    combineReducers({
+      articles: articlesReducer(
+        'Sports',
+        'comments',
+        (state, action) => state.findIndex(s => s.id === action.id),
+      ),
+    }),
+    complexState,
+  );
+  const action = { type: COMMENT_DISABLED, id: 3 };
+  store.dispatch(action);
+  assert.deepEqual(JSON.stringify(store.getState()),
+  JSON.stringify({
+    articles: Map([
+      ['Sports', { title: '...', comments: List([{ id: 1, disabled: false }, { id: 2, disabled: false }]) }],
+    ]),
+  }));
 });
