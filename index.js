@@ -63,3 +63,7 @@ const nestedReducer = (reducer, acceptActions, initialState = null) => (...args)
 };
 
 module.exports = exports = nestedReducer;
+module.exports.reduceReducers = (...reducers) => (prev, curr) => reducers.reduce(
+  (p, r) => r(p, curr),
+  prev,
+);

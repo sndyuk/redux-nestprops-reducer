@@ -1,5 +1,6 @@
 const assert = require('assert');
 const nestpropsReducer = require('../index');
+const reduceReducers = require('../index').reduceReducers;
 const List = require('immutable').List;
 const Map = require('immutable').Map;
 const createStore = require('redux').createStore;
@@ -221,7 +222,6 @@ it('apply all to intermediate prop', function() {
   });
 });
 
-
 it('apply though dispatching store', function() {
   const complexState = {
     articles: Map([
@@ -298,6 +298,60 @@ it('index not found', function() {
   JSON.stringify({
     articles: Map([
       ['Sports', { title: '...', comments: List([{ id: 1, disabled: false }, { id: 2, disabled: false }]) }],
+    ]),
+  }));
+});
+
+it('reduce reducers', function() {
+  const complexState = {
+    articles: Map([
+      ['Sea', { title: '...', comments: List([{ id: 1, disabled: false  }, { id: 2, disabled: false }]) }],
+      ['Sports', { title: '...', comments: List([{ id: 1, disabled: false }, { id: 2, disabled: false }]) }],
+    ]),
+  };
+  const CHANGE_CATEGORY = 'CHANGE_CATEGORY';
+  const articleReducer = (state = Map(), action) => {
+    switch(action.type) {
+      case CHANGE_CATEGORY:
+        const orig = state.get(action.before);
+        return state.remove(action.before).set(action.after, orig);
+      default:
+        return state;
+    }
+  };
+  const COMMENT_DISABLED = 'COMMENT_DISABLED';
+  const commentReducer = (state = {}, action) => {
+    switch(action.type) {
+      case COMMENT_DISABLED:
+        return {
+          ...state,
+          disabled: true,
+        };
+      default:
+        return state;
+    }
+  };
+  const articlesReducer = nestpropsReducer(commentReducer, [COMMENT_DISABLED]);
+  const store = createStore(
+    combineReducers({
+      articles: reduceReducers(
+        articleReducer,
+        articlesReducer(
+          (state, action) => state.findKey((v, k) => k === action.category),
+          'comments',
+          (state, action) => state.findIndex(s => s.id === action.id),
+        ),
+      ),
+    }),
+    complexState,
+  );
+  store.dispatch({ type: CHANGE_CATEGORY, before: 'Sea', after: 'Mountain' });
+  store.dispatch({ type: COMMENT_DISABLED, category: 'Mountain', id: 2 });
+  assert.deepEqual(JSON.stringify(store.getState()),
+  JSON.stringify({
+    articles: Map([
+      ['Sports', { title: '...', comments: List([{ id: 1, disabled: false }, { id: 2, disabled: false }]) }],
+      ['Mountain', { title: '...', comments: List([{ id: 1, disabled: false  }, { id: 2, disabled: true }]) }],
     ]),
   }));
 });

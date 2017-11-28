@@ -60,9 +60,9 @@ $ npm i --save redux-nestprops-reducer
 ## Usage
 
 ```js
-import nestpropsReducer from 'redux-nestprops-reducer';
-// < ES6: var nestpropsReducer = require('redux-nestprops-reducer');
-
+import nestpropsReducer, /* optional: { reduceReducers } */ from 'redux-nestprops-reducer';
+// var nestpropsReducer = require('redux-nestprops-reducer');
+// var reduceReducers = require('redux-nestprops-reducer').reduceReducers;
 
 /**
 ・whitelist actions are actions of the reducer.
@@ -72,7 +72,7 @@ const reducer = nestpropsReducer(reducer, [whitelist actions], initialState)(ide
 ```
 
 
-### Case: use a reducer for multiple objects.
+### Case: using a reducer for multiple objects.
 ```js
 const nestpropsReducer = require('redux-nestprops-reducer');
 const createStore = require('redux').createStore;
@@ -131,7 +131,52 @@ console.log(store.getState());
 */
 ```
 
-### Case: Nested list.
+### Case: applying multiple reducers to a same prop
+
+Use `reduceReducers`
+```js
+const nestpropsReducer = require('redux-nestprops-reducer');
+const reduceReducers = require('redux-nestprops-reducer').reduceReducers;
+
+const complexState = {
+  articles: Map([
+    ['Sea', { title: '...', comments: List([{ id: 1, disabled: false  }, { id: 2, disabled: false }]) }],
+    ['Sports', { title: '...', comments: List([{ id: 1, disabled: false }, { id: 2, disabled: false }]) }],
+  ]),
+};
+
+const CHANGE_CATEGORY = 'CHANGE_CATEGORY';
+const articleReducer = (state = Map(), action) => {
+  switch(action.type) {
+    case CHANGE_CATEGORY:
+      const orig = state.get(action.before);
+      return state.remove(action.before).set(action.after, orig);
+    default:
+      return state;
+  }
+};
+
+const articlesReducer = nestpropsReducer(commentReducer, [COMMENT_DISABLED]);
+const store = createStore(
+  combineReducers({
+    articles: reduceReducers(
+      articleReducer,
+      /*
+      fooReducer,
+      barReducer,
+      */
+      articlesReducer(
+        'Sea',
+        'comments',
+        (state, action) => state.findIndex(s => s.id === action.id),
+      ),
+    ),
+  }),
+  complexState,
+);
+```
+
+### Case: Handling nested arrays
 ```js
 const complexState = {
   categories: [
@@ -217,7 +262,7 @@ console.log(store.getState());
 */
 ```
 
-### Case: Immutable map and list
+### Case: Traversing Immutable maps and lists
 ```js
 const complexState = {
   articles: Map([
