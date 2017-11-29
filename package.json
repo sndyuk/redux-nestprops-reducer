@@ -1,12 +1,13 @@
 {
   "name": "redux-nestprops-reducer",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "A reducer handling a nested property reduces complexity in your code.",
   "author": "sndyuk",
   "license": "ISC",
   "main": "index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "js": "babel src/index.js --out-file ./index.js"
   },
   "repository": {
     "type": "git",
@@ -23,8 +24,13 @@
     "Nested"
   ],
   "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-plugin-transform-es2015-arrow-functions": "^6.22.0",
+    "babel-plugin-transform-object-assign": "^6.22.0",
+    "babel-preset-es2015": "^6.24.1",
     "immutable": "^3.8.2",
     "mocha": "^4.0.1",
     "redux": "^3.7.2"
-  }
+  },
+  "dependencies": {}
 }

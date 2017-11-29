@@ -1,4 +1,4 @@
-# redux-nestprops-reducer v1.0.6
+# redux-nestprops-reducer v1.0.9
 
 It makes a complex reducer simpler.
 
